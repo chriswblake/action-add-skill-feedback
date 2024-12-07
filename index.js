@@ -87,6 +87,8 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
     // Set the action as failed if an error occurs
     core.setFailed(error.message);
   }
+}
+
 /**
  * Get the ID of the most recent comment by the authenticated user on the specified issue.
  * @param {Object} octokit - The authenticated GitHub client.
