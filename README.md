@@ -25,3 +25,57 @@ Below are the optional values for the `premade-comment-name` input. Click the na
 | [`step-passed-preparing-next-step`](comment-premade/2-step-passed-preparing-next-step.md) | At the end of a "check work" workflow. | Informs users that they completed all steps and more are coming. |
 | [`congratulations`](comment-premade/x-congratulations.md) | After the ***entire*** Skill course is finished. | Let's the user know they are finished. Congratulates them for it! |
 
+## Examples
+
+> [!IMPORTANT]
+> The issue must already exist. In the below examples, that is issue `#1`.  
+
+### Example - Premade comment
+
+```yml
+name: Congratulation Completion
+on: push:
+permissions:
+  issues: write
+jobs:
+  add-feedback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Congratulate finishing the Skill
+        uses: chriswblake/add-skill-feedback@v1
+        with:
+          issue-number: 1
+          premade-comment-name: 'congratulations'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Example - Comment from a file
+
+`./my-comment.md`
+```md
+🤷 Having trouble? Here are some resources that might help.
+... 
+(some custom content)
+...
+```
+
+`.github/workflows/my-workflow.yml`
+```yml
+name: my-workflow
+on: push:
+permissions:
+  issues: write
+jobs:
+  add-feedback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Congratulate finishing the Skill
+        uses: chriswblake/add-skill-feedback@v1
+        with:
+          issue-number: 1
+          file-location: './my-comment.md'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
