@@ -22,6 +22,16 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
     updateRecent: ${updateRecent}
   `);
 
+  // Check for required inputs
+  if (!issueNumber) {
+    core.setFailed('Missing required input: issue-number');
+    exit(1);
+  }
+  if (!premadeCommentName && !fileLocation) {
+    core.setFailed('Missing required input: premade-comment-name or file-location');
+    exit(1);
+  }
+  
 /**
  * Get the ID of the most recent comment by the authenticated user on the specified issue.
  * @param {Object} octokit - The authenticated GitHub client.
