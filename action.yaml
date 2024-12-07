@@ -1,0 +1,22 @@
+name: 'Add Skill Feedback'
+description: 'A GitHub Action to post a comment to an issue from a .md file'
+inputs:
+  repo-url:
+    description: 'The GitHub repository URL'
+    required: false
+  issue-number:
+    description: 'The issue number to post the comment to.'
+    required: true
+  premade-comment-name:
+    description: 'The name of a premade comment. Overrides file-location if provided.'
+    required: false
+  file-location:
+    description: 'The location of a markdown file (.md) to be loaded as the comment.'
+    required: false
+  update-recent:
+    description: 'Replace the most recent comment by the same user.'
+    required: false
+    default: false
+runs:
+  using: 'node20'
+  main: 'index.js'
