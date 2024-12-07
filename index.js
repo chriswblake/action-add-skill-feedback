@@ -65,6 +65,24 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
         break;
     }
     const commentBody = loadCommentFromFile(fileLocation);
+
+    // Create an authenticated GitHub client
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+      throw new Error('GITHUB_TOKEN is not set');
+    }
+    const octokit = github.getOctokit(token);
+    
+    // Post the comment
+    const result = await postComment(
+      octokit,
+      owner,
+      repo,
+      issueNumber,
+      updateRecent,
+      commentBody
+    );
+
   } catch (error) {
     // Set the action as failed if an error occurs
     core.setFailed(error.message);
