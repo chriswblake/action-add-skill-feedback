@@ -42,6 +42,29 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
     // Extract owner and repo from the repoUrl
     const [owner, repo] = repoUrl.replace('https://github.com/', '').split('/');
 
+    // Load premade comment or specified file
+    switch (premadeCommentName) {
+      case 'ready-waiting-to-check':
+      case '0-ready-waiting-to-check':
+        fileLocation = './comment-premade/0-ready-waiting-to-check.md';
+        break;
+      
+      case 'checking':
+      case '1-checking':
+        fileLocation = './comment-premade/1-checking.md';
+        break;
+      
+      case 'step-passed-preparing-next-step':
+      case '2-step-passed-preparing-next-step':
+        fileLocation = './comment-premade/2-step-passed-preparing-next-step.md';
+        break;
+      
+      case 'congratulations':
+      case 'x-congratulations':
+        fileLocation = './comment-premade/x-congratulations.md';
+        break;
+    }
+    const commentBody = loadCommentFromFile(fileLocation);
   } catch (error) {
     // Set the action as failed if an error occurs
     core.setFailed(error.message);
