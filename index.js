@@ -32,6 +32,20 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
     exit(1);
   }
   
+  try {
+    // If repoUrl is not provided, use the context repo
+    if (!repoUrl) {
+      const { owner, repo } = github.context.repo;
+      repoUrl = `https://github.com/${owner}/${repo}`;
+    }
+
+    // Extract owner and repo from the repoUrl
+    const [owner, repo] = repoUrl.replace('https://github.com/', '').split('/');
+
+  } catch (error) {
+    // Set the action as failed if an error occurs
+    core.setFailed(error.message);
+  }
 /**
  * Get the ID of the most recent comment by the authenticated user on the specified issue.
  * @param {Object} octokit - The authenticated GitHub client.
