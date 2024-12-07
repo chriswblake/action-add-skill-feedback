@@ -45,6 +45,61 @@ async function getMostRecentCommentId(octokit, owner, repo, issueNumber) {
   // If there is a comment, return its id, otherwise return null
   return mostRecentComment ? mostRecentComment.id : null;
 }
+
+/**
+ * Post a comment on the specified issue. Optionally update the most recent comment by the same user.
+ * @param {Object} octokit - The authenticated GitHub client.
+ * @param {string} owner - The owner of the repository.
+ * @param {string} repo - The name of the repository.
+ * @param {number} issueNumber - The issue number.
+ * @param {boolean} updateRecent - Whether to replace the most recent comment by the same user.
+ * @param {string} commentBody - The content of the comment.
+ * @returns {Object} - The result of the comment creation or update.
+ */
+async function postComment(octokit, owner, repo, issueNumber, updateRecent, commentBody) {
+
+  if (updateRecent) {
+    // Get most recent comment from same user
+    const mostRecentCommentId = await getMostRecentCommentId(octokit, owner, repo, issueNumber);
+    
+    // Update the comment
+    const result = await octokit.rest.issues.updateComment({
+      owner: owner,
+      repo: repo,
+      comment_id: mostRecentCommentId,
+      body: commentBody
+    });
+
+    // Log the comment update
+    core.info(`Comment updated:
+      repo: ${owner}/${repo}
+      issueId: ${issueNumber}
+      commentId: ${mostRecentCommentId}
+    `);
+
+    return result;
+  } else
+  {
+    // Create a new comment
+    const result = await octokit.rest.issues.createComment({
+      owner: owner,
+      repo: repo,
+      issue_number: issueNumber,
+      body: commentBody
+    });
+
+    // Log the comment creation
+    const commentId = result.data.id;
+    core.info(`Comment created:
+      repo: ${owner}/${repo}
+      issueId: ${issueNumber}
+      commentId: ${commentId}
+    `);
+
+    return result;
+  }
+}
+
 /**
  * Load the content of a markdown file and replace supported variables from github workflow context.
  * @param {string} fileLocation - The location of the markdown file.
