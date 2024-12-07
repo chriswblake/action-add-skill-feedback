@@ -23,6 +23,29 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
   `);
 
 /**
+ * Get the ID of the most recent comment by the authenticated user on the specified issue.
+ * @param {Object} octokit - The authenticated GitHub client.
+ * @param {string} owner - The owner of the repository.
+ * @param {string} repo - The name of the repository.
+ * @param {number} issueNumber - The issue number.
+ * @returns {number|null} - The ID of the most recent comment or null if no comment is found.
+ */
+async function getMostRecentCommentId(octokit, owner, repo, issueNumber) {
+
+  // Get the list of comments on the issue
+  const { data: comments } = await octokit.rest.issues.listComments({
+    owner,
+    repo,
+    issue_number: issueNumber,
+  });
+
+  // Find the most recent comment by the authenticated user
+  const mostRecentComment = comments.reverse().find(comment => comment.user.login === owner);
+
+  // If there is a comment, return its id, otherwise return null
+  return mostRecentComment ? mostRecentComment.id : null;
+}
+/**
  * Load the content of a markdown file and replace supported variables from github workflow context.
  * @param {string} fileLocation - The location of the markdown file.
  * @returns {string} - The content of the file with variables replaced.
