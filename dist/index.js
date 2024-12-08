@@ -64,6 +64,11 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
       case '2-step-passed-preparing-next-step':
         fileLocation = path.resolve(__dirname, '..', 'comment-premade', '2-step-passed-preparing-next-step.md');
         break;
+
+      case 'lets-review':
+      case '3-lets-review':
+          fileLocation = path.resolve(__dirname, '..', 'comment-premade', '3-lets-review.md');
+          break;
       
       case 'congratulations':
       case 'x-congratulations':
