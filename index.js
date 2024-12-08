@@ -46,22 +46,22 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
     switch (premadeCommentName) {
       case 'ready-waiting-to-check':
       case '0-ready-waiting-to-check':
-        fileLocation = './comment-premade/0-ready-waiting-to-check.md';
+        fileLocation = path.resolve(__dirname, '..', 'comment-premade', '0-ready-waiting-to-check.md');
         break;
       
       case 'checking':
       case '1-checking':
-        fileLocation = './comment-premade/1-checking.md';
+        fileLocation = path.resolve(__dirname, '..', 'comment-premade', '1-checking.md');
         break;
       
       case 'step-passed-preparing-next-step':
       case '2-step-passed-preparing-next-step':
-        fileLocation = './comment-premade/2-step-passed-preparing-next-step.md';
+        fileLocation = path.resolve(__dirname, '..', 'comment-premade', '2-step-passed-preparing-next-step.md');
         break;
       
       case 'congratulations':
       case 'x-congratulations':
-        fileLocation = './comment-premade/x-congratulations.md';
+        fileLocation = path.resolve(__dirname, '..', 'comment-premade', 'x-congratulations.md');
         break;
     }
     const commentBody = loadCommentFromFile(fileLocation);
@@ -107,7 +107,7 @@ async function getMostRecentCommentId(octokit, owner, repo, issueNumber) {
   });
 
   // Find the most recent comment by the authenticated user
-  const mostRecentComment = comments.reverse().find(comment => comment.user.login === owner);
+  const mostRecentComment = comments.reverse().find(comment => comment.user.login === 'github-actions[bot]');
 
   // If there is a comment, return its id, otherwise return null
   return mostRecentComment ? mostRecentComment.id : null;
@@ -191,6 +191,8 @@ function loadCommentFromFile(fileLocation) {
 
 // If ran as a github action, pass workflow's inputs to the action
 if (process.env.GITHUB_ACTIONS) {
+  core.info(`Running Action from directory: ${__dirname}`);
+
   runAction({
     repoUrl: core.getInput('repo-url'),
     issueNumber: core.getInput('issue-number'),
