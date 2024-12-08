@@ -179,14 +179,17 @@ async function postComment(octokit, owner, repo, issueNumber, updateRecent, comm
 function loadCommentFromFile({commentTemplate, commentTemplateFile, commentTemplateVars}) {
  
   // If commentTemplate is set, override commentTemplateFile
-  const fl = path.resolve(__dirname, 'templates', commentTemplate+'.md');
-  if (fs.existsSync(fl)) {
-    commentTemplateFile = fl;
-  }else
-  {
-    core.setFailed("Unknown Template: " + commentTemplate);
-    exit(1);
+  if (commentTemplate) {
+    const fl = path.resolve(__dirname, 'templates', commentTemplate+'.md');
+    if (fs.existsSync(fl)) {
+      commentTemplateFile = fl;
+    }else
+    {
+      core.setFailed("Unknown Template: " + commentTemplate);
+      exit(1);
+    }
   }
+
   // Load markdown file as template
   const filePath = path.resolve(commentTemplateFile);
   let template = fs.readFileSync(filePath, 'utf8');

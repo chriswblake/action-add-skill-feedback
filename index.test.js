@@ -1,4 +1,80 @@
-const { loadCommentFromFile } = require('./index');
+jest.setTimeout(5 * 60 * 1000);
+
+// Main
+test.skip('runAction - using template name. No variables ', async () => {
+    // Context
+    // - Environment variable `GITHUB_TOKEN` is set and has access to the repo.
+    // - Issue is already created in that repo with number 1.
+
+    // Arrange
+    
+    // Act
+    await runAction({
+        repoUrl: 'chriswblake/skills-introduction-to-github',
+        issueNumber: 1,
+        
+        commentTemplate: 'checking-work',
+        updateRecent: false
+    });
+
+    // Assert
+    // Must be manually checked for now
+});
+
+test.skip('runAction - using template name', async () => {
+    // Context
+    // - Environment variable `GITHUB_TOKEN` is set and has access to the repo.
+    // - Issue is already created in that repo with number 1.
+
+    // Arrange
+    
+    // Act
+    await runAction({
+        repoUrl: 'chriswblake/skills-introduction-to-github',
+        issueNumber: 1,
+
+        commentTemplate: 'lesson-finished',
+        commentTemplateVars: JSON.stringify({
+            'github': {
+                'owner': 'chriswblake',
+                'repo': 'introduction-to-github',
+            }
+        }),
+        updateRecent: true
+    });
+
+    // Assert
+    // Must be manually checked for now
+});
+
+test.skip('runAction - using file path', async () => {
+    // Context
+    // - Environment variable `GITHUB_TOKEN` is set and has access to the repo.
+    // - Issue is already created in that repo with number 1.
+
+    // Arrange
+    
+    // Act
+    await runAction({
+        repoUrl: 'chriswblake/skills-introduction-to-github',
+        issueNumber: 1,
+        updateRecent: true,
+
+        commentTemplateFile: './templates/lesson-finished.md',
+        commentTemplateVars: JSON.stringify({
+            'github': {
+                'owner': 'chriswblake',
+                'repo': 'introduction-to-github',
+            }
+        })
+
+    });
+
+    // Assert
+    // Must be manually checked for now
+});
+
+
 // Methods
 test('loadCommentFromFile - using template name. No variables', () => {
     // Arrange
@@ -19,7 +95,7 @@ test('loadCommentFromFile - using template name', () => {
     
     // Act
     const content = loadCommentFromFile({
-        commentTemplate: 'x-congratulations', 
+        commentTemplate: 'lesson-finished', 
         commentTemplateVars: {
             'github': {
                 'owner': 'chriswblake',
@@ -40,7 +116,7 @@ test('loadCommentFromFile - using file path', () => {
     
     // Act
     const content = loadCommentFromFile({
-        commentTemplateFile: './comment-premade/x-congratulations.md', 
+        commentTemplateFile: './templates/lesson-finished.md', 
         commentTemplateVars: {
             'github': {
                 'owner': 'chriswblake',
