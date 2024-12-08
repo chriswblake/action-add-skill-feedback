@@ -108,7 +108,8 @@ async function getMostRecentCommentId(octokit, owner, repo, issueNumber) {
   });
 
   // Find the most recent comment by the authenticated user
-  const { data: { login } } = await octokit.rest.users.getAuthenticated(); // github-actions[bot]
+  // const { data: { login } } = await octokit.rest.users.getAuthenticated(); // github-actions[bot]
+  const login = 'github-actions[bot]';
   const mostRecentComment = comments.reverse().find(comment => comment.user.login === login);
 
   // If there is a comment, return its id, otherwise return null
