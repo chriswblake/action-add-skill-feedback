@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Congratulate finishing the Skill
-        uses: chriswblake/add-skill-feedback@v1
+        uses: chriswblake/action-add-skill-feedback@v1
         with:
           issue-number: 1
           premade-comment-name: 'congratulations'
