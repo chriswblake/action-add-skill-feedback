@@ -2,6 +2,7 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 const fs = require('fs');
 const path = require('path');
+const mustache = require('mustache');
 const { exit } = require('process');
 
 /**
@@ -9,27 +10,43 @@ const { exit } = require('process');
  * Note: Values are passed using destructuring so optionality is similar worklow inputs.
  * @param {string} repoUrl - The URL of the repository.
  * @param {number} issueNumber - The issue number to post the comment to.
- * @param {string} premadeCommentName - The name of a premade comment.
- * @param {string} fileLocation - The location of a markdown file to be loaded as the comment.
+ * @param {string} commentTemplate - The name of a premade template.
+ * @param {string} commentTemplateFile - The location of a markdown file to be used as the template.
+ * @param {object|string} commentTemplateVars - A JSON array of variables to be replaced in the template, or the string representation.
  * @param {boolean} updateRecent - Whether to replace the most recent comment by the same user.
  */
-async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation, updateRecent, }) {
+async function runAction({repoUrl, issueNumber, commentTemplate, commentTemplateFile, commentTemplateVars, updateRecent }) {
   core.info(`Running action with inputs:
     repoUrl: ${repoUrl}
     issueNumber: ${issueNumber}
-    premadeCommentName: ${premadeCommentName}
-    fileLocation: ${fileLocation}
+    commentTemplate: ${commentTemplate}
+    commentTemplateFile: ${commentTemplateFile}
+    commentTemplateVars: ${commentTemplateVars}
     updateRecent: ${updateRecent}
   `);
 
-  // Check for required inputs
+  // Check inputs
   if (!issueNumber) {
     core.setFailed('Missing required input: issue-number');
     exit(1);
   }
-  if (!premadeCommentName && !fileLocation) {
-    core.setFailed('Missing required input: premade-comment-name or file-location');
+  if (commentTemplate && commentTemplateFile) {
+    core.setFailed("Please pick only one: 'comment-template' or 'comment-template-file'");
     exit(1);
+  }
+  if (!commentTemplate && !commentTemplateFile) {
+    core.setFailed("Missing required input: 'comment-template' or 'comment-template-file'");
+    exit(1);
+  }
+
+  // Try to convert commentTemplateVars to JSON
+  if (typeof commentTemplateVars === 'string' && commentTemplateVars.length > 0) {
+    try {
+      commentTemplateVars = JSON.parse(commentTemplateVars);
+    } catch (error) {
+      core.setFailed("Invalid JSON input: 'comment-template-vars'");
+      exit(1);
+    }
   }
   
   try {
@@ -42,34 +59,12 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
     // Extract owner and repo from the repoUrl
     const [owner, repo] = repoUrl.replace('https://github.com/', '').split('/');
 
-    // Load premade comment or specified file
-    switch (premadeCommentName) {
-      case 'ready-waiting-to-check':
-      case '0-ready-waiting-to-check':
-        fileLocation = path.resolve(__dirname, '..', 'comment-premade', '0-ready-waiting-to-check.md');
-        break;
-      
-      case 'checking':
-      case '1-checking':
-        fileLocation = path.resolve(__dirname, '..', 'comment-premade', '1-checking.md');
-        break;
-      
-      case 'step-passed-preparing-next-step':
-      case '2-step-passed-preparing-next-step':
-        fileLocation = path.resolve(__dirname, '..', 'comment-premade', '2-step-passed-preparing-next-step.md');
-        break;
-
-      case 'lets-review':
-      case '3-lets-review':
-          fileLocation = path.resolve(__dirname, '..', 'comment-premade', '3-lets-review.md');
-          break;
-      
-      case 'congratulations':
-      case 'x-congratulations':
-        fileLocation = path.resolve(__dirname, '..', 'comment-premade', 'x-congratulations.md');
-        break;
-    }
-    const commentBody = loadCommentFromFile(fileLocation);
+    // Load the comment using a template
+    const commentBody = loadCommentFromFile({
+      commentTemplate,
+      commentTemplateFile,
+      commentTemplateVars
+    });
 
     // Create an authenticated GitHub client
     const token = process.env.GITHUB_TOKEN;
@@ -91,6 +86,7 @@ async function runAction({repoUrl, issueNumber, premadeCommentName, fileLocation
   } catch (error) {
     // Set the action as failed if an error occurs
     core.setFailed(error.message);
+    exit(1);
   }
 }
 
@@ -112,7 +108,8 @@ async function getMostRecentCommentId(octokit, owner, repo, issueNumber) {
   });
 
   // Find the most recent comment by the authenticated user
-  const mostRecentComment = comments.reverse().find(comment => comment.user.login === 'github-actions[bot]');
+  const { data: { login } } = await octokit.rest.users.getAuthenticated(); // github-actions[bot]
+  const mostRecentComment = comments.reverse().find(comment => comment.user.login === login);
 
   // If there is a comment, return its id, otherwise return null
   return mostRecentComment ? mostRecentComment.id : null;
@@ -173,41 +170,47 @@ async function postComment(octokit, owner, repo, issueNumber, updateRecent, comm
 }
 
 /**
- * Load the content of a markdown file and replace supported variables from github workflow context.
- * @param {string} fileLocation - The location of the markdown file.
+ * Load the content of a markdown file and replace variables.
+ * @param {string} commentTemplate - Name of a premade template.
+ * @param {string} commentTemplateFile - Location of a markdown file template. Ignored if commentTemplate is set.
+ * @param {object} commentTemplateVars - A JSON object with variables to be replaced in the markdown text.
  * @returns {string} - The content of the file with variables replaced.
  */
-function loadCommentFromFile(fileLocation) {
-  // Load markdown file content
-  const filePath = path.resolve(fileLocation);
-  let content = fs.readFileSync(filePath, 'utf8');
-
-  // Replace supported variables. Example: ${{ github.repository }} -> owner/repo
-  supported_variables = {
-    'github.repository': `${github.context.repo.owner}/${github.context.repo.repo}`,
-    'inputs.repo-url': core.getInput('repo-url')
+function loadCommentFromFile({commentTemplate, commentTemplateFile, commentTemplateVars}) {
+ 
+  // If commentTemplate is set, override commentTemplateFile
+  const fl = path.resolve(__dirname, 'templates', commentTemplate+'.md');
+  if (fs.existsSync(fl)) {
+    commentTemplateFile = fl;
+  }else
+  {
+    core.setFailed("Unknown Template: " + commentTemplate);
+    exit(1);
   }
-  for (const [key, value] of Object.entries(supported_variables)) {
-    content = content.replace(new RegExp(`\\$\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), value);
-  }
+  // Load markdown file as template
+  const filePath = path.resolve(commentTemplateFile);
+  let template = fs.readFileSync(filePath, 'utf8');
 
-  return content;
+  // Replace variables in template.
+  const output = mustache.render(template, commentTemplateVars);
+
+  return output;
 }
 
 // If ran as a github action, pass workflow's inputs to the action
 if (process.env.GITHUB_ACTIONS) {
-  core.info(`Running Action from directory: ${__dirname}`);
-
   runAction({
     repoUrl: core.getInput('repo-url'),
     issueNumber: core.getInput('issue-number'),
-    premadeCommentName: core.getInput('premade-comment-name'),
-    fileLocation: core.getInput('file-location'),
+    commentTemplate: core.getInput('comment-template'),
+    commentTemplateFile: core.getInput('comment-template-file'),
+    commentTemplateVars: core.getInput('comment-template-vars'),
     updateRecent: core.getInput('update-recent') === 'true',
   });
 }
 
 // Export functions to enable unit testing
 module.exports = {
+  runAction,
   loadCommentFromFile
 };

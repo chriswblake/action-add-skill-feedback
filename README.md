@@ -45,7 +45,7 @@ jobs:
         uses: chriswblake/action-add-skill-feedback@v1
         with:
           issue-number: 1
-          premade-comment-name: 'congratulations'
+          comment-template: 'lesson-finished'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -71,10 +71,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Congratulate finishing the Skill
-        uses: chriswblake/add-skill-feedback@v1
+        uses: chriswblake/action-add-skill-feedback@v1
         with:
           issue-number: 1
-          file-location: './my-comment.md'
+          comment-template-file: './my-comment.md'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Example - Premade comment template with variables
+
+```yml
+name: Template with Variables
+on: push:
+permissions:
+  issues: write
+jobs:
+  add-feedback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Provide feedback about mistake
+        uses: chriswblake/action-add-skill-feedback@v1
+        with:
+          issue-number: 1
+          comment-template: 'teacher'
+          comment-template-vars: '{
+            "title": "Having trouble?",
+            "body": "The following tips might help! ..."
+          }'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```

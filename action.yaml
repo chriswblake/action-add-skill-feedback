@@ -2,17 +2,22 @@ name: 'Add Skill Feedback'
 description: 'A GitHub Action to post a comment to an issue from a .md file'
 inputs:
   repo-url:
-    description: 'The GitHub repository URL'
+    description: 'The GitHub repository URL.'
     required: false
   issue-number:
     description: 'The issue number to post the comment to.'
     required: true
-  premade-comment-name:
-    description: 'The name of a premade comment. Overrides file-location if provided.'
+  
+  comment-template:
+    description: 'The name of a comment template provided by this Action.'
     required: false
-  file-location:
-    description: 'The location of a markdown file (.md) to be loaded as the comment.'
+  comment-template-file:
+    description: 'The location of a markdown file (.md) to be used as the template.'
     required: false
+  comment-template-vars:
+    description: 'A JSON array of variables to be replaced in the template.'
+    required: false
+  
   update-recent:
     description: 'Replace the most recent comment by the same user.'
     required: false
